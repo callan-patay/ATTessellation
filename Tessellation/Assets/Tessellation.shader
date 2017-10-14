@@ -14,11 +14,11 @@
 		
 		CGPROGRAM
 		// Physically based Standard lighting model, and enable shadows on all light types
-		#pragma surface surf BlinnPhong addshadow fullforwardshadows vertex:disp tessellate:tessFixed nolightmap
+		#pragma surface surf BlinnPhong addshadow fullforwardshadows vertex:disp nolightmap
 
 		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
-		#include "Tessellation.cginc"
+	//	#include "Tessellation.cginc"
 
 		struct appdata {
 			float4 vertex: POSITION;
@@ -29,20 +29,14 @@
 		};
 
 
-		float _Tess;
+	//	float _Tess;
 
-		float4 tessFixed()
-		{
-			return _Tess;
+	//	float4 tessFixed()
+	//	{
+	//		return _Tess;
 
-		}
+	//	}
 
-		float4 tessDistance (appdata v0, appdata v1, appdata v2)
-		{
-			float minDistance = 10.0;
-			float maxDist = 25.0;
-			return UnityDistanceBasedTess(v0.vertex, v1.vertex, v2.vertex, minDistance, maxDist, _Tess);
-		}
 
 		sampler2D _DispTex;
 		float _Displacement;
@@ -51,6 +45,8 @@
 		{
 			float d = tex2Dlod(_DispTex, float4(v.texcoord.xy,0,0)).r * _Displacement;
 			v.vertex.xyz += v.normal * d;
+
+
 
 		}
 
