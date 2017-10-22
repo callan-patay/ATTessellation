@@ -4,6 +4,7 @@
             _MainTex ("Base (RGB)", 2D) = "white" {}
             _DispTex ("Disp Texture", 2D) = "gray" {}
             _NormalMap ("Normalmap", 2D) = "bump" {}
+            _VectDispMap("Vector Displacement Map (RGB)", 2D) = "white" {}
             _Displacement ("Displacement", Range(0, 5.0)) = 0.3
             _Color ("Color", color) = (1,1,1,0)
             _SpecColor ("Spec color", color) = (0.5,0.5,0.5,0.5)
@@ -40,6 +41,15 @@
                 float d = tex2Dlod(_DispTex, float4(v.texcoord.xy*_DispTex_ST.xy,0,0)).r * _Displacement;
                 v.vertex.xyz += v.normal * d;
             }
+
+
+           // void vect (inout appdata v)
+           // {
+           // 	float x = tex2Dlod(_VectDispMap, float4(v.texcoord.xy, 0, 0)).r * _Displacement;
+           	//	v.vertex.xyz += v.normal * x;
+
+           // }
+
 
             struct Input {
                 float2 uv_MainTex;
