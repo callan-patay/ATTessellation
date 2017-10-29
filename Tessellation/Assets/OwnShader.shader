@@ -4,7 +4,6 @@
             _MainTex ("Base (RGB)", 2D) = "white" {}
             _DispTex ("Disp Texture", 2D) = "gray" {}
             _NormalMap ("Normalmap", 2D) = "bump" {}
-            _VectDispMap("Vector Displacement Map (RGB)", 2D) = "white" {}
             _Displacement ("Displacement", Range(0, 5.0)) = 0.3
             _Color ("Color", color) = (1,1,1,0)
             _SpecColor ("Spec color", color) = (0.5,0.5,0.5,0.5)
@@ -14,9 +13,9 @@
             LOD 300
             
             CGPROGRAM
-            #pragma surface surf BlinnPhong addshadow fullforwardshadows vertex:disp tessellate:tessFixed nolightmap
+            #pragma surface surf BlinnPhong addshadow fullforwardshadows vertex:disp tessellate:tessDistance nolightmap
             #pragma target 4.6
-
+            #include "Tessellation.cginc"
             struct appdata {
                 float4 vertex : POSITION;
                 float4 tangent : TANGENT;
@@ -26,9 +25,10 @@
 
             float _Tess;
 
-            float4 tessFixed()
-            {
-                return _Tess;
+       float4 tessDistance (appdata v0, appdata v1, appdata v2) {
+                float minDist = 2.0;
+                float maxDist = 15.0;
+                return UnityDistanceBasedTess(v0.vertex, v1.vertex, v2.vertex, minDist, maxDist, _Tess);
             }
 
             sampler2D _DispTex;
@@ -42,13 +42,6 @@
                 v.vertex.xyz += v.normal * d;
             }
 
-
-           // void vect (inout appdata v)
-           // {
-           // 	float x = tex2Dlod(_VectDispMap, float4(v.texcoord.xy, 0, 0)).r * _Displacement;
-           	//	v.vertex.xyz += v.normal * x;
-
-           // }
 
 
             struct Input {

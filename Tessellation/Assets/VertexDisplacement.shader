@@ -1,7 +1,4 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-Shader "Custom/VertexDisplacement" {
+﻿Shader "Custom/VertexDisplacement" {
 Properties 
 		{
 		_Color ("Main Color", Color) = (1,1,1,1)
@@ -30,7 +27,7 @@ SubShader
 		// Physically based Standard lighting model, and enable shadows on all light types
 		#pragma vertex vert
 		#pragma fragment frag
-		#pragma tessellate:tessFixed
+		#pragma tessellate:tessDistance
 	
 		#define UNITY_PASS_FORWARDBASE
 		#include "UnityCG.cginc"
@@ -40,7 +37,7 @@ SubShader
 
 		#pragma multi_compile_fwdbase_fullshadows
 		#pragma multi_compile_fog
-		#pragma target 3.0
+		#pragma target 4.6
 		float4 _Color;
 		sampler2D _DispTex;
 		float4 _DispTex_ST;
@@ -73,47 +70,48 @@ SubShader
 		};
 
 		VertexOutput vert (VertexInput v) {
-		VertexOutput o = (VertexOutput)0;           
-		o.uv0 = v.texcoord0;
-		o.uv1 = v.texcoord1;
-		o.normalDir = UnityObjectToWorldNormal(v.normal);
-		UNITY_TRANSFER_FOG(o,o.pos);
-		TRANSFER_VERTEX_TO_FRAGMENT(o)
-		float3 dcolor = tex2Dlod (_DispTex, float4(o.uv0 * _DispTex_ST.xy,0,0));
-		float d = (dcolor.r*_ChannelFactor.r + dcolor.g*_ChannelFactor.g + dcolor.b*_ChannelFactor.b);
-		v.vertex.xyz += v.normal * d * _Displacement;
-		o.pos = UnityObjectToClipPos(v.vertex);
-		o.posWorld = mul(unity_ObjectToWorld, v.vertex);
-		return o;
+			VertexOutput o = (VertexOutput)0;           
+			o.uv0 = v.texcoord0;
+			o.uv1 = v.texcoord1;
+			o.normalDir = UnityObjectToWorldNormal(v.normal);
+			UNITY_TRANSFER_FOG(o,o.pos);
+			TRANSFER_VERTEX_TO_FRAGMENT(o)
+			float3 dcolor = tex2Dlod (_DispTex, float4(o.uv0 * _DispTex_ST.xy,0,0));
+			float d = (dcolor.r*_ChannelFactor.r + dcolor.g*_ChannelFactor.g + dcolor.b*_ChannelFactor.b);
+			v.vertex.xyz += v.normal * d * _Displacement;
+			o.pos = UnityObjectToClipPos(v.vertex);
+			o.posWorld = mul(unity_ObjectToWorld, v.vertex);
+			return o;
 		}
 
-		float4 tessFixed()
-		{
+       float4 tessDistance (VertexInput v0, VertexInput v1, VertexInput v2) {
+                float minDist = 10.0;
+                float maxDist = 25.0;
+                return UnityDistanceBasedTess(v0.vertex, v1.vertex, v2.vertex, minDist, maxDist, _Tess);
+        }
 
-			return _Tess;
-		}
 		float4 frag(VertexOutput i) : COLOR {
 		 
-		 //normal direction calculations
-		 half3 normalDirection = normalize(i.normalDir);
-		 
-		 //diffuse color calculations
-		 float3 dcolor = tex2D (_DispTex, TRANSFORM_TEX(i.uv0,_DispTex));
-		 float d = (dcolor.r*_ChannelFactor.r + dcolor.g*_ChannelFactor.g + dcolor.b*_ChannelFactor.b) * (_Range.y-_Range.x) + _Range.x;
-		 clip (_ClipRange-d);
-		 half4 c = tex2D (_RampTex, float2(d,0.5));
-		 float3 diffuseColor = c.rgb *_Color.rgb;
-		 
-		 //light calculations
-		 float3 lightDirection = normalize(lerp(_WorldSpaceLightPos0.xyz, _WorldSpaceLightPos0.xyz - i.posWorld.xyz,_WorldSpaceLightPos0.w));
-		 float NdotL = max(0.0, dot( normalDirection, lightDirection ));
-		 //Specular calculations
-		 float3 lightingModel = pow(NdotL * 0.5 + 0.5,2) * diffuseColor;
-		 float attenuation = LIGHT_ATTENUATION(i);
-		 float3 attenColor = attenuation * _LightColor0.rgb;
-		 float4 finalDiffuse = float4(lightingModel * attenColor,1);
-		 UNITY_APPLY_FOG(i.fogCoord, finalDiffuse);
-		 return finalDiffuse;
+			 //normal direction calculations
+			 half3 normalDirection = normalize(i.normalDir);
+			 
+			 //diffuse color calculations
+			 float3 dcolor = tex2D (_DispTex, TRANSFORM_TEX(i.uv0,_DispTex));
+			 float d = (dcolor.r*_ChannelFactor.r + dcolor.g*_ChannelFactor.g + dcolor.b*_ChannelFactor.b) * (_Range.y-_Range.x) + _Range.x;
+			 clip (_ClipRange-d);
+			 half4 c = tex2D (_RampTex, float2(d,0.5));
+			 float3 diffuseColor = c.rgb *_Color.rgb;
+			 
+			 //light calculations
+			 float3 lightDirection = normalize(lerp(_WorldSpaceLightPos0.xyz, _WorldSpaceLightPos0.xyz - i.posWorld.xyz,_WorldSpaceLightPos0.w));
+			 float NdotL = max(0.0, dot( normalDirection, lightDirection ));
+			 //Specular calculations
+			 float3 lightingModel = pow(NdotL * 0.5 + 0.5,2) * diffuseColor;
+			 float attenuation = LIGHT_ATTENUATION(i);
+			 float3 attenColor = attenuation * _LightColor0.rgb;
+			 float4 finalDiffuse = float4(lightingModel * attenColor,1);
+			 UNITY_APPLY_FOG(i.fogCoord, finalDiffuse);
+			 return finalDiffuse;
 		 }
 		 ENDCG
 		 }
